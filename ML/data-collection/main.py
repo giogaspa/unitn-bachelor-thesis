@@ -1,13 +1,22 @@
+import sys
+import os
+import pathlib
 import cv2 as cv
 import tensorflow as tf
+import typer
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from InquirerPy.validator import EmptyInputValidator
-import typer
 from rich import print
 
+# Load common module path
+_dir = pathlib.Path(__file__).parent.resolve()
+sys.path.append(os.path.join(_dir, '..'))
+
 from params import *
+from common.params import exercises
 from utils import *
+
 
 def main():
 

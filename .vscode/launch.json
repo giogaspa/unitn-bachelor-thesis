@@ -11,6 +11,30 @@
             "program": "ML/data-collection/main.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: Preprocess Data",
+            "type": "python",
+            "request": "launch",
+            "program": "ML/data-preprocessing/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Train model",
+            "type": "python",
+            "request": "launch",
+            "program": "ML/model-training/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Test model",
+            "type": "python",
+            "request": "launch",
+            "program": "ML/test/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

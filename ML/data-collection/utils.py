@@ -1,20 +1,25 @@
+import sys
+import os
 import math
 import pathlib
+import csv
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import csv
-import os
 from rich import print
 from rich.progress import Progress
 from uuid import uuid4
 from datetime import datetime
 
-from params import *
-from movenet import *
-from file import *
-
+# Load common module path
 _dir = pathlib.Path(__file__).parent.resolve()
+sys.path.append(os.path.join(_dir, '..'))
+
+from common.params import DATASET_PATH, KEY_POINTS, KEY_POINTS_NAMES
+from common.file import make_folder, count_rows
+from common.movenet import movenet
+from params import *
+
 export_data = []
 
 def get_cordinates_from(normalized_coord):
@@ -62,6 +67,26 @@ def draw_keypoints(image, kp):
     
     text = "Distance is ok!" if kp['left_shoulder'][1] > 0.5 and kp['right_shoulder'][1] > 0.5 else "Shoulders not visible"
     cv.putText(image, text, (20,40), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
+
+    ## TODO rifattorizzare calcolo angolo rispetto asse Y + calcolare correttezza calcolo
+    ## TODO calcolare angolo due punti rispetto asse X
+
+    # HEAD VERTICAL ANGLE
+    dividendo = (kp['right_eye'][0][1] - kp['left_eye'][0][1]) 
+    divisore = math.sqrt((kp['right_eye'][0][0] - kp['left_eye'][0][0])**2 + (kp['right_eye'][0][1] - kp['left_eye'][0][1])**2)
+    head_angle = 90 - round(math.degrees(math.acos(dividendo/divisore)))
+    
+    text = f"Head angle: {head_angle} L" if head_angle >= 0  else f"Head angle: {head_angle*-1} R"
+    cv.putText(image, text, (20,80), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
+
+    
+    # SHOULDERS VERTICAL ANGLE
+    dividendo = (kp['right_shoulder'][0][1] - kp['left_shoulder'][0][1]) 
+    divisore = math.sqrt((kp['right_shoulder'][0][0] - kp['left_shoulder'][0][0])**2 + (kp['right_shoulder'][0][1] - kp['left_shoulder'][0][1])**2)
+    shoulder_angle = 90 - round(math.degrees(math.acos(dividendo/divisore)))
+
+    text = f"Shoulders angle: {shoulder_angle} L" if shoulder_angle >= 0  else f"Shoulders angle: {shoulder_angle*-1} R"
+    cv.putText(image, text, (20,120), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
 
 def draw_stats(image):
     text = f"{len(export_data)}"
@@ -125,7 +150,7 @@ def export_keypoints(acquisition_info):
 
     exerciseId = acquisition_info["exercise_id"]
     exerciseFilename = acquisition_info["exercise"]["filename"]
-    exercise_path =  os.path.join(_dir, '..', 'data', exerciseId)
+    exercise_path =  os.path.join(DATASET_PATH, exerciseId)
 
     csvFile = os.path.join(exercise_path, f'{exerciseFilename}.csv')
     imagesFramePath = os.path.join(exercise_path, 'frames')
@@ -149,7 +174,6 @@ def export_keypoints(acquisition_info):
             if not has_headers:
                 # write the header
                 writer.writerow([
-                    'class',
                     'nose-x', 'nose-y', 'nose-p',
                     'left_eye-x', 'left_eye-y', 'left_eye-p',
                     'right_eye-x', 'right_eye-y', 'right_eye-p',
@@ -167,13 +191,15 @@ def export_keypoints(acquisition_info):
                     'right_knee-x', 'right_knee-y', 'right_knee-p',
                     'left_ankle-x', 'left_ankle-y', 'left_ankle-p',
                     'right_ankle-x', 'right_ankle-y', 'right_ankle-p',
-                    'frame-id',
-                    'camera',
+
                     'camera-position',
-                    'subject',
                     'subject-position',
+                    'class',
+                    'camera',
+                    'subject',
                     'model',
                     'date',
+                    'frame-id',
                 ])
 
             # write the data
@@ -182,7 +208,6 @@ def export_keypoints(acquisition_info):
                 acquisition_timestamp = int(datetime.timestamp(data.get('date')))
 
                 writer.writerow([
-                    data.get('pose'),
                     data.get('nose')[0][0], data.get('nose')[0][1], data.get('nose')[1],
                     data.get('left_eye')[0][0], data.get('left_eye')[0][1], data.get('left_eye')[1],
                     data.get('right_eye')[0][0], data.get('right_eye')[0][1], data.get('right_eye')[1],
@@ -200,13 +225,15 @@ def export_keypoints(acquisition_info):
                     data.get('right_knee')[0][0], data.get('right_knee')[0][1], data.get('right_knee')[1],
                     data.get('left_ankle')[0][0], data.get('left_ankle')[0][1], data.get('left_ankle')[1],
                     data.get('right_ankle')[0][0], data.get('right_ankle')[0][1], data.get('right_ankle')[1],
-                    str(data.get('frame_uuid')),
-                    acquisition_info["camera_id"],
+                    
                     acquisition_info["camera_position"],
-                    acquisition_info["subject"],
                     acquisition_info["subject_position"],
+                    data.get('pose'),
+                    acquisition_info["camera_id"],
+                    acquisition_info["subject"],
                     acquisition_info["model"],
                     acquisition_timestamp,
+                    str(data.get('frame_uuid')),
                 ])
 
                 #save frame
