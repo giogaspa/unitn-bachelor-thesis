@@ -1,4 +1,6 @@
+import math
 import numpy as np
+from sklearn.model_selection import train_test_split
 import tensorflow as tf
 
 from .params import *
@@ -39,3 +41,24 @@ def compute_key_points(image):
         raw[KEY_POINTS_NAMES[idx]] = [(coord[:2]), coord[2]]
 
     return (norm, raw)
+
+def compute_vertical_angle(pt_1, pt_2):
+    y_1 = pt_1[1]
+    x_1 = pt_1[0]
+    y_2 = pt_2[1]
+    x_2 = pt_2[0]
+
+    num = y_1 - y_2
+    denom = math.sqrt((x_1 - x_2)**2 + (y_1 - y_2)**2)
+    vertical_angle = 90 - round(math.degrees(math.acos(num/denom)))
+
+    return vertical_angle
+
+def split_dataset(data, test_size=0.5, shuffle=True, random_state=1):
+    X_train, X_test, y_train, y_test = train_test_split(data[:,:-1], data[:,-1], test_size=test_size, shuffle=shuffle, random_state=random_state)
+    y_train = y_train.reshape(-1,1)
+    y_test = y_test.reshape(-1,1)
+    train_data = np.concatenate((X_train, y_train), axis=1)
+    test_data = np.concatenate((X_test, y_test), axis=1)
+
+    return train_data, test_data

@@ -34,53 +34,55 @@ exercises = {
         "filename" : "piegamenti-laterali-del-capo",
         "captureCommands" : [
             {
-                "key" : 1,
+                "key" : 1,   # arrow down
                 "className" : "center"
             },
             {
-                "key" : 2,
+                "key" : 2,   # arrow left
                 "className" : "left"
             },
             {
-                "key" : 3,
-                "className" : "right"
+                "key" : 113, # q
+                "className" : "half-left"
             },
             {
                 "key" : 97,  # a
-                "className" : "wrong-right-forward"
-            },
-            {
-                "key" : 122, # z
-                "className" : "wrong-right-backward"
-            },
-            {
-                "key" : 115, # s
-                "className" : "wrong-center-forward"
-            },
-            {
-                "key" : 120, # x
-                "className" : "wrong-center-backward"
-            },
-            {
-                "key" : 100, # d
                 "className" : "wrong-left-forward"
             },
             {
-                "key" : 99, # c
-                "className" : "wrong-left-backward"
+                "key" : 122, # z
+                "className" : "wrong-left-shoulder"
+            },
+            {
+                "key" : 3,   # arrow right
+                "className" : "right"
+            },
+            {
+                "key" : 101, # e
+                "className" : "half-right"
+            },
+            {
+                "key" : 100, # d
+                "className" : "wrong-right-forward"
+            },
+            {
+                "key" : 99,  # c
+                "className" : "wrong-right-shoulder"
             }
-        ]
+        ],
+        "transformer": {
+            "center": 0,
+            "right": 1,
+            "half-right": 2,
+            "wrong-right-forward": 3,
+            "wrong-right-shoulder": 4,
+            "left": 5,
+            "half-left": 6,
+            "wrong-left-forward": 7,
+            "wrong-left-shoulder": 8,
+        }
     }
 }
-
-## KEYS 
-# a = 97
-# s = 115
-# d = 100
-# z = 122
-# x = 120
-# c = 99
-
 
 image_width = 640
 image_height = 640

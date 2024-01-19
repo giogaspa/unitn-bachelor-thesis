@@ -1,6 +1,5 @@
 import sys
 import os
-import math
 import pathlib
 import csv
 import cv2 as cv
@@ -15,10 +14,10 @@ from datetime import datetime
 _dir = pathlib.Path(__file__).parent.resolve()
 sys.path.append(os.path.join(_dir, '..'))
 
-from common.params import DATASET_PATH, KEY_POINTS, KEY_POINTS_NAMES
+from common.params import DATASET_PATH, KEY_POINTS, KEY_POINTS_NAMES, image_width, image_height, movenet_image_landscape_height_offset, movenet_image_height, movenet_image_width
 from common.file import make_folder, count_rows
 from common.movenet import movenet
-from params import *
+from common.utils import compute_vertical_angle
 
 export_data = []
 
@@ -40,7 +39,7 @@ def compute_key_points(image):
     tImage = tf.expand_dims(tImage, axis=0)
 
     # Movenet si aspetta in input: A frame of video or an image, 
-    # represented as an int32 tensor of shape: 192x192x3. 
+    # represented as an int32 tensor of shape: 256x256x3. 
     # Channels order: RGB with values in [0, 255].
     kp = movenet(tImage)
     kp_coords = np.squeeze(kp['output_0'].numpy())
@@ -61,64 +60,36 @@ def compute_key_points(image):
 def draw_keypoints(image, kp):
     cv.circle(image, kp['nose'][0], 4, (0, 0, 255), -1)
     cv.circle(image, kp['left_eye'][0], 4, (255, 0, 0), -1)
-    cv.circle(image, kp['right_eye'][0], 4, (255, 0, 0), -1)
-    cv.circle(image, kp['left_shoulder'][0], 4, (0, 255, 0), -1)
+    cv.circle(image, kp['right_eye'][0], 4, (0, 255, 0), -1)
+    cv.circle(image, kp['left_ear'][0], 4, (255, 0, 0), -1)
+    cv.circle(image, kp['right_ear'][0], 4, (0, 255, 0), -1)
+    cv.circle(image, kp['left_shoulder'][0], 4, (255, 0, 0), -1)
     cv.circle(image, kp['right_shoulder'][0], 4, (0, 255, 0), -1)
     
     text = "Distance is ok!" if kp['left_shoulder'][1] > 0.5 and kp['right_shoulder'][1] > 0.5 else "Shoulders not visible"
-    cv.putText(image, text, (20,40), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
-
-    ## TODO rifattorizzare calcolo angolo rispetto asse Y + calcolare correttezza calcolo
-    ## TODO calcolare angolo due punti rispetto asse X
+    cv.putText(image, text, (20,40), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA)
 
     # HEAD VERTICAL ANGLE
-    dividendo = (kp['right_eye'][0][1] - kp['left_eye'][0][1]) 
-    divisore = math.sqrt((kp['right_eye'][0][0] - kp['left_eye'][0][0])**2 + (kp['right_eye'][0][1] - kp['left_eye'][0][1])**2)
-    head_angle = 90 - round(math.degrees(math.acos(dividendo/divisore)))
-    
-    text = f"Head angle: {head_angle} L" if head_angle >= 0  else f"Head angle: {head_angle*-1} R"
+    head_angle = compute_head_vertical_angle(kp)
+    text = f"Head angle: {head_angle}"
     cv.putText(image, text, (20,80), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
 
-    
     # SHOULDERS VERTICAL ANGLE
-    dividendo = (kp['right_shoulder'][0][1] - kp['left_shoulder'][0][1]) 
-    divisore = math.sqrt((kp['right_shoulder'][0][0] - kp['left_shoulder'][0][0])**2 + (kp['right_shoulder'][0][1] - kp['left_shoulder'][0][1])**2)
-    shoulder_angle = 90 - round(math.degrees(math.acos(dividendo/divisore)))
-
-    text = f"Shoulders angle: {shoulder_angle} L" if shoulder_angle >= 0  else f"Shoulders angle: {shoulder_angle*-1} R"
+    shoulder_angle = compute_shoulder_vertical_angle(kp)
+    text = f"Shoulders angle: {shoulder_angle}"
     cv.putText(image, text, (20,120), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
 
 def draw_stats(image):
     text = f"{len(export_data)}"
     cv.putText(image, text, (20,600), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
 
-# TODO Calcola inclinazione laterale testa
-def compute_lateral_head_inclination(kp):
-    # m = (y2-y1)/(x2-x1)
-    eye_slope = (kp['right_eye'][0][1] - kp['left_eye'][0][1]) / (kp['right_eye'][0][0] - kp['left_eye'][0][0])
-    eye_center = (((kp['right_eye'][0][0] + kp['left_eye'][0][0])/2), ((kp['right_eye'][0][1] + kp['left_eye'][0][1])/2))
-    shoulder_center = (((kp['left_shoulder'][0][0] + kp['left_shoulder'][0][0])/2), ((kp['right_shoulder'][0][1] + kp['right_shoulder'][0][1])/2))
-    pt1 = (int(eye_center[1] * eye_slope + eye_center[0]), 0)
-    pt2 = (int((eye_center[1]-image_height) * eye_slope + eye_center[0]), image_height)
-    myradians = math.atan2(eye_center[1]-shoulder_center[1], eye_center[0]-shoulder_center[0])
-    mydegrees = math.degrees(myradians)
+def compute_head_vertical_angle(kp):
+    return compute_vertical_angle(kp['right_eye'][0], kp['left_eye'][0])
 
-    #cv.line(image,  pt1, pt2, (0, 255, 0), 4)
-    #cv.line(image,  kp['left_shoulder'][0],  kp['right_shoulder'][0], (0, 255, 0), 4)
-    
-    return 0
+def compute_shoulder_vertical_angle(kp):
+    return compute_vertical_angle(kp['right_shoulder'][0], kp['left_shoulder'][0])
 
-# TODO Calcola rotazione testa: con il modello 2D non posso calcolarlo
-def compute_head_rotation(kp):
-    
-    return 0
-
-# TODO Calcola inclinazione frontale testa: con il modello 2D non posso calcolarlo
-def compute_frontal_head_inclination(kp):
-    
-    return 0
-
-def add_to_keypoints(kp, pose, frame): 
+def add_to_keypoints(kp, pose, frame):
     frame_uuid = uuid4()
 
     export_data.append({
@@ -208,23 +179,23 @@ def export_keypoints(acquisition_info):
                 acquisition_timestamp = int(datetime.timestamp(data.get('date')))
 
                 writer.writerow([
-                    data.get('nose')[0][0], data.get('nose')[0][1], data.get('nose')[1],
-                    data.get('left_eye')[0][0], data.get('left_eye')[0][1], data.get('left_eye')[1],
-                    data.get('right_eye')[0][0], data.get('right_eye')[0][1], data.get('right_eye')[1],
-                    data.get('left_ear')[0][0], data.get('left_ear')[0][1], data.get('left_ear')[1],
-                    data.get('right_ear')[0][0], data.get('right_ear')[0][1], data.get('right_ear')[1],
-                    data.get('left_shoulder')[0][0], data.get('left_shoulder')[0][1], data.get('left_shoulder')[1],
-                    data.get('right_shoulder')[0][0], data.get('right_shoulder')[0][1], data.get('right_shoulder')[1],
-                    data.get('left_elbow')[0][0], data.get('left_elbow')[0][1], data.get('left_elbow')[1],
-                    data.get('right_elbow')[0][0], data.get('right_elbow')[0][1], data.get('right_elbow')[1],
-                    data.get('left_wrist')[0][0], data.get('left_wrist')[0][1], data.get('left_wrist')[1],
-                    data.get('right_wrist')[0][0], data.get('right_wrist')[0][1], data.get('right_wrist')[1],
-                    data.get('left_hip')[0][0], data.get('left_hip')[0][1], data.get('left_hip')[1],
-                    data.get('right_hip')[0][0], data.get('right_hip')[0][1], data.get('right_hip')[1],
-                    data.get('left_knee')[0][0], data.get('left_knee')[0][1], data.get('left_knee')[1],
-                    data.get('right_knee')[0][0], data.get('right_knee')[0][1], data.get('right_knee')[1],
-                    data.get('left_ankle')[0][0], data.get('left_ankle')[0][1], data.get('left_ankle')[1],
-                    data.get('right_ankle')[0][0], data.get('right_ankle')[0][1], data.get('right_ankle')[1],
+                    data.get('nose')[0][1], data.get('nose')[0][0], data.get('nose')[1],
+                    data.get('left_eye')[0][1], data.get('left_eye')[0][0], data.get('left_eye')[1],
+                    data.get('right_eye')[0][1], data.get('right_eye')[0][0], data.get('right_eye')[1],
+                    data.get('left_ear')[0][1], data.get('left_ear')[0][0], data.get('left_ear')[1],
+                    data.get('right_ear')[0][1], data.get('right_ear')[0][0], data.get('right_ear')[1],
+                    data.get('left_shoulder')[0][1], data.get('left_shoulder')[0][0], data.get('left_shoulder')[1],
+                    data.get('right_shoulder')[0][1], data.get('right_shoulder')[0][0], data.get('right_shoulder')[1],
+                    data.get('left_elbow')[0][1], data.get('left_elbow')[0][0], data.get('left_elbow')[1],
+                    data.get('right_elbow')[0][1], data.get('right_elbow')[0][0], data.get('right_elbow')[1],
+                    data.get('left_wrist')[0][1], data.get('left_wrist')[0][0], data.get('left_wrist')[1],
+                    data.get('right_wrist')[0][1], data.get('right_wrist')[0][0], data.get('right_wrist')[1],
+                    data.get('left_hip')[0][1], data.get('left_hip')[0][0], data.get('left_hip')[1],
+                    data.get('right_hip')[0][1], data.get('right_hip')[0][0], data.get('right_hip')[1],
+                    data.get('left_knee')[0][1], data.get('left_knee')[0][0], data.get('left_knee')[1],
+                    data.get('right_knee')[0][1], data.get('right_knee')[0][0], data.get('right_knee')[1],
+                    data.get('left_ankle')[0][1], data.get('left_ankle')[0][0], data.get('left_ankle')[1],
+                    data.get('right_ankle')[0][1], data.get('right_ankle')[0][0], data.get('right_ankle')[1],
                     
                     acquisition_info["camera_position"],
                     acquisition_info["subject_position"],
@@ -237,7 +208,7 @@ def export_keypoints(acquisition_info):
                 ])
 
                 #save frame
-                frame_filename = os.path.join(imagesFramePath, f'frame_{acquisition_timestamp}_{str(data.get("frame_uuid"))}.png')
+                frame_filename = os.path.join(imagesFramePath, f'frame_{acquisition_timestamp}_{data.get("pose")}_{str(data.get("frame_uuid"))}.png')
                 cv.imwrite(frame_filename, data.get('frame'))
 
                 # Update

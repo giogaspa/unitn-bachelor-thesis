@@ -35,3 +35,14 @@ def write_csv(file_path, data):
                 progress.update(task, completed=processed)
 
     print(f"Saved {len(data)} records")
+
+def list_files_in_folder(path):
+    res = []
+
+    for file_path in os.listdir(path):
+    # check if current file_path is a file
+        if os.path.isfile(os.path.join(path, file_path)) and file_path.endswith('keras'):
+            # add filename to list
+            res.append(file_path)
+    
+    return res

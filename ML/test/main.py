@@ -16,18 +16,9 @@ sys.path.append(os.path.join(_dir, 'models'))
 
 from common.params import exercises, DATASET_PATH, image_height, image_width
 from common.utils import compute_key_points
+from common.file import list_files_in_folder
 
-CLASS_TRANSFORMER = [
-    "center",
-    "wrong-center-forward",
-    "wrong-center-backward",
-    "right",
-    "wrong-right-forward",
-    "wrong-right-backward",
-    "left",
-    "wrong-left-forward",
-    "wrong-left-backward",
-]
+import ex1
 
 def main():
     ## Prompt data
@@ -36,9 +27,21 @@ def main():
         choices= [Choice(value=id, name=exercises[id]["name"]) for id in exercises]
     ).execute()
 
-    ## Load model
-    model_filepath = os.path.join(DATASET_PATH, exerciseId, f'{exercises[exerciseId]["filename"]}.keras')
-    model = tf.keras.models.load_model(model_filepath)
+    exercise_models_path = os.path.join(DATASET_PATH, exerciseId, 'models')
+    models = list_files_in_folder(exercise_models_path)
+
+    model_idx = inquirer.select(
+        message="Choose the model to load:",
+        choices= [Choice(value=idx, name=model) for idx, model in enumerate(models)]
+    ).execute()
+
+    model_filename = models[model_idx]
+    model_filepath = os.path.join(exercise_models_path, model_filename)
+
+    match exerciseId:
+        case 'ex1':
+            ex1.load_model(model_filepath)
+
 
     ## Capture video streaming from webcam
     cap = cv.VideoCapture(int(0))
@@ -50,38 +53,25 @@ def main():
         if not ret:
             print("[bold red]Can't receive frame (stream end?). Exiting ...[/bold red]")
             break
-        
-        frame = cv.flip(frame, 1)
 
         # Our operations on the frame come here
         kp_norm, kp_raw = compute_key_points(frame)
 
-        data = np.array([
-            kp_raw['nose'][0][0],kp_raw['nose'][0][1],
-            kp_raw['left_eye'][0][0],kp_raw['left_eye'][0][1],
-            kp_raw['right_eye'][0][0],kp_raw['right_eye'][0][1],
-            kp_raw['left_ear'][0][0],kp_raw['left_ear'][0][1],
-            kp_raw['right_ear'][0][0],kp_raw['right_ear'][0][1],
-            kp_raw['left_shoulder'][0][0],kp_raw['left_shoulder'][0][1],
-            kp_raw['right_shoulder'][0][0],kp_raw['right_shoulder'][0][1],
-        ])
-
-        data = tf.constant(data.astype(np.float32).reshape([1, 14]))
-        predicted = model.predict(data, verbose=0)
-        predicted = tf.nn.softmax(predicted).numpy()
-        predicted_class = CLASS_TRANSFORMER[np.argmax(predicted)]
+        prediction = None
+        match exerciseId:
+            case 'ex1':
+                prediction = ex1.predict(kp_raw)
 
         # Resize frame
-        #flippedImage = cv.flip(frame, 1)
         resizedImage = tf.cast(tf.image.resize_with_pad(frame, image_height, image_width), dtype=tf.uint8).numpy()
 
-        cv.putText(resizedImage, predicted_class, (20,40), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
+        cv.putText(resizedImage, prediction, (20,40), cv.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1, cv.LINE_AA) 
 
         # Display the resulting frame
         cv.imshow('Webcam', resizedImage)
         
         key = cv.waitKey(1) & 0xFF
-        if key == ord("q"):
+        if key == 27: #esc
             break
 
 

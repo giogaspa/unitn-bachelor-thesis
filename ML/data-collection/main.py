@@ -68,14 +68,11 @@ def main():
         if not ret:
             print("[bold red]Can't receive frame (stream end?). Exiting ...[/bold red]")
             break
-        
-        frame = cv.flip(frame, 1)
 
         # Our operations on the frame come here
         kp_norm, kp_raw = compute_key_points(frame)
 
         # Resize frame
-        #flippedImage = cv.flip(frame, 1)
         resizedImage = tf.cast(tf.image.resize_with_pad(frame, image_height, image_width), dtype=tf.uint8).numpy()
 
         # Draw keypoints
@@ -86,7 +83,7 @@ def main():
         cv.imshow('Webcam', resizedImage)
         
         key = cv.waitKey(1) & 0xFF
-        if key == ord("q"):
+        if key == 27:
             break
 
         command = next((item for item in exercise['captureCommands'] if item["key"] == key), False)
@@ -98,7 +95,11 @@ def main():
     cv.destroyAllWindows()
     cv.waitKey(100)
 
-    export_keypoints(acquisition_info)
+    # SAVE MODEL
+    save = inquirer.confirm("Save data?", default=True).execute()
+
+    if save:
+        export_keypoints(acquisition_info)
 
 if __name__ == "__main__":
     typer.run(main)
