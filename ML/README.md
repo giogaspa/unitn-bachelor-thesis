@@ -6,19 +6,43 @@ python 3.11.7
 
 ## Comandi utili
 
-Aggiungi a requirements.txt versioni dei pacchetti utilizzati (solo per sviluppo):
+Aggiungere a requirements.txt versioni dei pacchetti utilizzati (solo per sviluppo):
 
 ```bash
 python -m pip freeze > requirements.txt
 ```
 
-Installa dipendenze progetto:
+Installare dipendenze progetto:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-Converti modello .keras in .json compatibile con tfjs:
+Collezionare dati:
+
+```bash
+python ./data-collection/main.py
+```
+
+Processare dati:
+
+```bash
+python ./data-preprocessing/main.py
+```
+
+Allenare modello sui dati preprocessati:
+
+```bash
+python ./model-training/main.py
+```
+
+Testare il modello:
+
+```bash
+python ./test/main.py
+```
+
+Converti modello .h5 in .json compatibile con tfjs:
 
 ```bash
 tensorflowjs_converter --input_format keras \
