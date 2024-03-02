@@ -28,7 +28,7 @@ def main():
     ## Load data
     dataset_filepath = os.path.join(DATASET_PATH, exerciseId, f'{exercises[exerciseId]["filename"]}.csv')
     raw_data = np.genfromtxt(dataset_filepath, delimiter=",", dtype=None, encoding='UTF8')
-    raw_data = raw_data[1:,:54] # Remove header row and useless column
+    raw_data = raw_data[1:,:] # Remove header row
 
     processed_data = None
 

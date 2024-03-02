@@ -31,19 +31,9 @@ def main():
     acquisition_info["exercise_id"] = exerciseId
     acquisition_info["exercise"] = exercise
 
-    acquisition_info["subject"] = inquirer.select(
-        message="Choose subject:",
-        choices= subject
-    ).execute()
-
     acquisition_info["subject_position"] = inquirer.select(
         message="Choose subject position:",
         choices= subject_position
-    ).execute()
-
-    acquisition_info["camera_id"] = inquirer.select(
-        message="Choose camera:",
-        choices= [Choice(value=camera["id"], name=camera["name"]) for camera in camera_list]
     ).execute()
 
     acquisition_info["camera_position"] = inquirer.select(

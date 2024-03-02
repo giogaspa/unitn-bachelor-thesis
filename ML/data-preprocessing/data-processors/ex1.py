@@ -3,7 +3,7 @@ import numpy as np
 from common.utils import compute_vertical_angle
 from common.params import image_height, image_width, movenet_image_landscape_height_offset
 
-PROBABILITY_THRESHOLD = 0.2
+PROBABILITY_THRESHOLD = 0.3
 
 def process(raw_data):
     print("Process data")
@@ -11,7 +11,7 @@ def process(raw_data):
     data = raw_data[:,:21]
     data = data.astype(np.float32)
 
-    classes = raw_data[:,53]
+    classes = raw_data[:,-1]
 
     processed_data = [[                    
         'nose-x', 'nose-y',
@@ -42,7 +42,6 @@ def process(raw_data):
 
             processed_data.append([*r[0:2], *r[3:5], *r[6:8], *r[9:11], *r[12:14], *r[15:17], *r[18:20], head_angle, shoulder_angle, classes[idx]])
 
-    print(np.array(processed_data).shape)
     processed_data = np.array(processed_data).reshape([-1, 17])
 
     # FEATURE SCALING -> not necessary beacause all data are between 0 and 1

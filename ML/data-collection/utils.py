@@ -165,12 +165,11 @@ def export_keypoints(acquisition_info):
 
                     'camera-position',
                     'subject-position',
-                    'class',
-                    'camera',
-                    'subject',
                     'model',
                     'date',
                     'frame-id',
+
+                    'class',
                 ])
 
             # write the data
@@ -199,12 +198,10 @@ def export_keypoints(acquisition_info):
                     
                     acquisition_info["camera_position"],
                     acquisition_info["subject_position"],
-                    data.get('pose'),
-                    acquisition_info["camera_id"],
-                    acquisition_info["subject"],
                     acquisition_info["model"],
                     acquisition_timestamp,
                     str(data.get('frame_uuid')),
+                    data.get('pose'),
                 ])
 
                 #save frame
