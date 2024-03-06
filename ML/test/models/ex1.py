@@ -24,8 +24,8 @@ def predict(kp_raw):
             kp_raw['nose'][0][1],kp_raw['nose'][0][0],
             kp_raw['left_eye'][0][1],kp_raw['left_eye'][0][0],
             kp_raw['right_eye'][0][1],kp_raw['right_eye'][0][0],
-            kp_raw['left_ear'][0][1],kp_raw['left_ear'][0][0],
-            kp_raw['right_ear'][0][1],kp_raw['right_ear'][0][0],
+            #kp_raw['left_ear'][0][1],kp_raw['left_ear'][0][0],
+            #kp_raw['right_ear'][0][1],kp_raw['right_ear'][0][0],
             kp_raw['left_shoulder'][0][1],kp_raw['left_shoulder'][0][0],
             kp_raw['right_shoulder'][0][1],kp_raw['right_shoulder'][0][0],
             head_angle, shoulder_angle

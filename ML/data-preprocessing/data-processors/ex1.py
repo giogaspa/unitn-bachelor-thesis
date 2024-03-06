@@ -17,8 +17,8 @@ def process(raw_data):
         'nose-x', 'nose-y',
         'left_eye-x', 'left_eye-y',
         'right_eye-x', 'right_eye-y',
-        'left_ear-x', 'left_ear-y',
-        'right_ear-x', 'right_ear-y',
+        #'left_ear-x', 'left_ear-y',
+        #'right_ear-x', 'right_ear-y',
         'left_shoulder-x', 'left_shoulder-y',
         'right_shoulder-x', 'right_shoulder-y',
         'head_angle', 'shoulder_angle',
@@ -31,8 +31,8 @@ def process(raw_data):
             r[2] >= PROBABILITY_THRESHOLD 
             and r[5] >= PROBABILITY_THRESHOLD
             and r[8] >= PROBABILITY_THRESHOLD
-            and r[11] >= PROBABILITY_THRESHOLD
-            and r[14] >= PROBABILITY_THRESHOLD
+            #and r[11] >= PROBABILITY_THRESHOLD
+            #and r[14] >= PROBABILITY_THRESHOLD
             and r[17] >= PROBABILITY_THRESHOLD
             and r[20] >= PROBABILITY_THRESHOLD
             ):
@@ -40,9 +40,10 @@ def process(raw_data):
             head_angle = compute_head_angle(r) / 90
             shoulder_angle = compute_shoulder_angle(r) / 90
 
-            processed_data.append([*r[0:2], *r[3:5], *r[6:8], *r[9:11], *r[12:14], *r[15:17], *r[18:20], head_angle, shoulder_angle, classes[idx]])
+            #processed_data.append([*r[0:2], *r[3:5], *r[6:8], *r[9:11], *r[12:14], *r[15:17], *r[18:20], head_angle, shoulder_angle, classes[idx]])
+            processed_data.append([*r[0:2], *r[3:5], *r[6:8], *r[15:17], *r[18:20], head_angle, shoulder_angle, classes[idx]])
 
-    processed_data = np.array(processed_data).reshape([-1, 17])
+    processed_data = np.array(processed_data).reshape([-1, 13])
 
     # FEATURE SCALING -> not necessary beacause all data are between 0 and 1
 
